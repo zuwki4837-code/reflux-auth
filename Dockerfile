@@ -19,7 +19,6 @@ COPY --from=publish /app/publish .
 RUN mkdir -p /app/data && chown -R 1654:1654 /app /app/data
 
 USER app
-ENV ASPNETCORE_URLS=http://+:8080
 ENV DATABASE_DIR=/app/data
 
 ENTRYPOINT ["dotnet", "RefluxAuth.dll"]
