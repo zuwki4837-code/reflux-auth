@@ -619,9 +619,10 @@ app.MapGet("/api/admin/logs", (HttpContext context) =>
     return Results.Json(new { success = true, logs, total, page, limit });
 });
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{port}");
+Console.WriteLine($"[STARTUP] Listening on port {port}");
 app.Run();
 
 // ----------------------------------------------------

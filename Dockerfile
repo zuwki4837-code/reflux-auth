@@ -3,24 +3,12 @@ WORKDIR /src
 COPY ["RefluxAuth.csproj", "./"]
 RUN dotnet restore "RefluxAuth.csproj"
 COPY . .
-WORKDIR "/src/"
-RUN dotnet build "RefluxAuth.csproj" -c Release -o /app/build
-
-FROM build AS publish
 RUN dotnet publish "RefluxAuth.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER root
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-EXPOSE 8080
 COPY --from=publish /app/publish .
-
-# Set up writable database folder and fix permissions for secure app user
-RUN mkdir -p /app/data && chown -R 1654:1654 /app /app/data
-
-USER app
+RUN mkdir -p /app/data
 ENV DATABASE_DIR=/app/data
-ENV PORT=8080
-ENV ASPNETCORE_URLS=http://+:8080
-
+ENV DOTNET_EnableDiagnostics=0
 ENTRYPOINT ["dotnet", "RefluxAuth.dll"]
