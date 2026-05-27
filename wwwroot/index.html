@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>plasma.lol - Admin Panel</title>
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Login overlay (shown first, asks for admin key) -->
+  <div id="loginOverlay">
+    <div class="login-card">
+      <div class="login-logo">plasma<span class="accent">.lol</span></div>
+      <p>Seller Administration Control Panel</p>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="text-align: left;">
+          <label for="adminKeyInput">Admin Master Key</label>
+          <input type="password" id="adminKeyInput" class="form-control" placeholder="••••••••••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Authenticate</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main app (hidden until authenticated) -->
+  <div id="app" style="display:none">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h1>plasma<span class="accent">.lol</span></h1>
+        <div class="subtitle">Management Console</div>
+      </div>
+      <ul class="nav-menu">
+        <li data-page="dashboard" class="active" onclick="switchPage('dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
+        </li>
+        <li data-page="licenses" onclick="switchPage('licenses')">
+          <span class="nav-icon">🔑</span> Licenses
+        </li>
+        <li data-page="users" onclick="switchPage('users')">
+          <span class="nav-icon">👥</span> Users
+        </li>
+        <li data-page="logs" onclick="switchPage('logs')">
+          <span class="nav-icon">📋</span> Audit Logs
+        </li>
+        <li data-page="settings" onclick="switchPage('settings')">
+          <span class="nav-icon">⚙️</span> App Settings
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">v1.0.0</span>
+        <button class="logout-btn" onclick="handleLogout()">
+          <span>Sign Out</span> 🚪
+        </button>
+      </div>
+    </nav>
+    
+    <!-- Main content area -->
+    <main id="content">
+      
+      <!-- Dashboard page -->
+      <section id="page-dashboard" class="active">
+        <h2>Dashboard Overview</h2>
+        
+        <!-- Stats Grid -->
+        <div class="grid-4">
+          <div class="card stat-card">
+            <div class="stat-label">Total Users</div>
+            <div id="stat-total-users" class="stat-value">0</div>
+            <div class="stat-icon">👥</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Total Keys</div>
+            <div id="stat-total-licenses" class="stat-value">0</div>
+            <div class="stat-icon">🔑</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Active Licenses</div>
+            <div id="stat-active-licenses" class="stat-value">0</div>
+            <div class="stat-icon">🟢</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Unused Keys</div>
+            <div id="stat-unused-licenses" class="stat-value">0</div>
+            <div class="stat-icon">⚪</div>
+          </div>
+        </div>
+
+        <div class="grid-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <!-- Recent activity section -->
+          <div class="card">
+            <h3 style="margin-bottom: 20px; font-weight: 600; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
+              <span>Recent Activity Logs</span>
+              <button class="btn btn-secondary btn-sm" onclick="switchPage('logs')">View All</button>
+            </h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>User</th>
+                    <th>Details</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-recent-logs">
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted);">Loading logs...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <h3 style="margin-bottom: 20px; font-weight: 600; font-size: 1.1rem;">Quick Actions</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <button class="btn btn-primary" onclick="openGenerateModal()">🔑 Generate Keys</button>
+              <button class="btn btn-secondary" onclick="loadDashboardStats()">🔄 Refresh Statistics</button>
+              <button class="btn btn-danger" onclick="togglePauseApp()" id="quick-pause-btn">⏸️ Pause Application</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Licenses page -->
+      <section id="page-licenses">
+        <div class="view-header">
+          <h2>License Keys</h2>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="loadLicenses(1)">🔄 Refresh</button>
+            <button class="btn btn-primary" onclick="openGenerateModal()">➕ Generate Keys</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="view-header" style="margin-bottom: 16px;">
+            <div class="search-bar">
+              <span>🔍</span>
+              <input type="text" id="license-search" placeholder="Search licenses..." oninput="filterLicenses()">
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>License Key</th>
+                  <th>Duration</th>
+                  <th>Level</th>
+                  <th>Status</th>
+                  <th>Used By / HWID</th>
+                  <th>Created At</th>
+                  <th>Expires At</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="licenses-table-body">
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted);">Loading licenses...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" id="btn-license-prev" onclick="changeLicensePage(-1)">◀ Prev</button>
+            <span class="page-num" id="license-page-num">Page 1</span>
+            <button class="btn btn-secondary btn-sm" id="btn-license-next" onclick="changeLicensePage(1)">Next ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users page -->
+      <section id="page-users">
+        <div class="view-header">
+          <h2>Application Users</h2>
+          <button class="btn btn-secondary" onclick="loadUsers(1)">🔄 Refresh</button>
+        </div>
+
+        <div class="card">
+          <div class="view-header" style="margin-bottom: 16px;">
+            <div class="search-bar">
+              <span>🔍</span>
+              <input type="text" id="user-search" placeholder="Search users..." oninput="filterUsers()">
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>HWID</th>
+                  <th>Level</th>
+                  <th>Status</th>
+                  <th>IP Address</th>
+                  <th>Email</th>
+                  <th>Discord</th>
+                  <th>Last Login</th>
+                  <th>Expires</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr>
+                  <td colspan="10" style="text-align: center; color: var(--text-muted);">Loading users...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" id="btn-user-prev" onclick="changeUserPage(-1)">◀ Prev</button>
+            <span class="page-num" id="user-page-num">Page 1</span>
+            <button class="btn btn-secondary btn-sm" id="btn-user-next" onclick="changeUserPage(1)">Next ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Logs page -->
+      <section id="page-logs">
+        <div class="view-header">
+          <h2>Audit & Security Logs</h2>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <select id="log-filter-select" class="form-control" style="width: 180px; padding: 8px 12px;" onchange="loadLogs(1)">
+              <option value="">All Events</option>
+              <option value="init">Init Session</option>
+              <option value="login">Login Success</option>
+              <option value="login_fail">Login Failed</option>
+              <option value="register">Register</option>
+              <option value="license_activate">License Activation</option>
+              <option value="license_login">License Login</option>
+              <option value="license_fail">License Failed</option>
+            </select>
+            <button class="btn btn-secondary" onclick="loadLogs(1)">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Event</th>
+                  <th>Target User</th>
+                  <th>IP Address</th>
+                  <th>Log Details</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading logs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" id="btn-log-prev" onclick="changeLogPage(-1)">◀ Prev</button>
+            <span class="page-num" id="log-page-num">Page 1</span>
+            <button class="btn btn-secondary btn-sm" id="btn-log-next" onclick="changeLogPage(1)">Next ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings page -->
+      <section id="page-settings">
+        <h2>Application Settings</h2>
+        
+        <div class="grid-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <!-- App Info Card -->
+          <div class="card">
+            <h3 style="margin-bottom: 20px; font-weight: 600;">Application Properties</h3>
+            
+            <div class="form-group">
+              <label>Application Name</label>
+              <input type="text" id="setting-app-name" class="form-control" readonly>
+            </div>
+
+            <div class="form-group">
+              <label>Owner ID</label>
+              <input type="text" id="setting-owner-id" class="form-control" readonly>
+            </div>
+
+            <div class="form-group">
+              <label>Application Version</label>
+              <input type="text" id="setting-version" class="form-control" readonly>
+            </div>
+
+            <div class="form-group">
+              <label>Application Secret</label>
+              <div class="secret-container">
+                <input type="password" id="setting-secret" class="secret-field" value="••••••••••••••••" readonly>
+                <button class="btn btn-secondary btn-sm" onclick="toggleSecretVisibility()">Reveal</button>
+                <button class="btn btn-secondary btn-sm" onclick="regenerateSecret()">Rotate</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer Actions -->
+          <div class="card">
+            <h3 style="margin-bottom: 20px; font-weight: 600;">Developer Console</h3>
+            
+            <div class="form-group">
+              <label>Application Status</label>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border-color);">
+                <span id="setting-app-status-text">Active (Receiving Requests)</span>
+                <button class="btn btn-primary btn-sm" onclick="togglePauseApp()" id="setting-pause-btn">Pause App</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Change Master Admin Key</label>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                Change the master key used to log in to this administration control panel. Requires security PIN.
+              </p>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="setting-master-key" class="form-control" placeholder="New Master Key" style="font-family: monospace;">
+                <button class="btn btn-primary" onclick="promptMasterKeyChange()" style="white-space: nowrap;">Update Key</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+
+  <!-- Generate Licenses Modal -->
+  <div id="generateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Generate License Keys</h3>
+        <button class="close-btn" onclick="closeGenerateModal()">&times;</button>
+      </div>
+      <form id="generateForm" onsubmit="submitGenerateLicenses(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="genCount">Number of Keys</label>
+            <input type="number" id="genCount" class="form-control" min="1" max="100" value="5" required>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="genDuration">Duration</label>
+              <select id="genDuration" class="form-control">
+                <option value="1">1 Day</option>
+                <option value="7">7 Days</option>
+                <option value="30" selected>30 Days</option>
+                <option value="90">90 Days</option>
+                <option value="365">1 Year</option>
+                <option value="36500">Lifetime</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="genLevel">Level / Tier</label>
+              <input type="number" id="genLevel" class="form-control" min="1" max="10" value="1" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="genPrefix">Custom Prefix (Optional)</label>
+            <input type="text" id="genPrefix" class="form-control" placeholder="e.g. PLASMA">
+          </div>
+
+          <div class="form-group">
+            <label for="genNote">Note / Description</label>
+            <input type="text" id="genNote" class="form-control" placeholder="e.g. Beta tester keys">
+          </div>
+
+          <!-- Output of generated keys -->
+          <div id="generate-results-wrapper" style="display: none;">
+            <label>Generated Keys</label>
+            <div class="results-area" id="generated-keys-list"></div>
+            <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 8px; width: 100%;" onclick="copyAllGeneratedKeys()">Copy All Keys 📋</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()">Close</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-generate">Generate Keys</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
