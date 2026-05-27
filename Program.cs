@@ -618,7 +618,8 @@ app.MapGet("/api/admin/logs", (HttpContext context) =>
     return Results.Json(new { success = true, logs, total, page, limit });
 });
 
-app.Run("http://localhost:3000");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
+app.Run($"http://0.0.0.0:{port}");
 
 // ----------------------------------------------------
 // DATABASE & MODEL HELPER FUNCTIONS
