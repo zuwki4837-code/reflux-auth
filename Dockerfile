@@ -20,5 +20,7 @@ RUN mkdir -p /app/data && chown -R 1654:1654 /app /app/data
 
 USER app
 ENV DATABASE_DIR=/app/data
+ENV PORT=8080
+ENV ASPNETCORE_URLS=http://+:8080
 
 ENTRYPOINT ["dotnet", "RefluxAuth.dll"]
