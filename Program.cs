@@ -78,7 +78,8 @@ app.Use(async (context, next) =>
 });
 
 // Database initialization
-string dbPath = Path.Combine(AppContext.BaseDirectory, "auth.db");
+string dbFolder = Environment.GetEnvironmentVariable("DATABASE_DIR") ?? AppContext.BaseDirectory;
+string dbPath = Path.Combine(dbFolder, "auth.db");
 string connString = $"Data Source={dbPath};";
 
 InitializeDatabase(connString);
