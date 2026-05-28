@@ -1,4 +1,8 @@
+node_modules/
+auth.db
+*.db
+.env
 bin/
 obj/
-*.db
 .vs/
+publish_test/
